@@ -11,7 +11,7 @@ router.get('/login', renderLoginPage);
 
 // Handle registration and login
 router.post('/register', register);
-router.post('/login', passport.authenticate('local', { failureRedirect: '/login' }), login);
+router.post('/login', passport.authenticate('local', { failureRedirect: '/login', failureFlash: true }), login );
 
 router.get('/logout', logout)
 

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folders</title>
+</head>
+<body>
+    <h1>Your Folders</h1>
+    <form action="/folders/create" method="POST">
+        <input type="text" name="name" placeholder="Folder name" required>
+        <button type="submit">Create Folder</button>
+    </form>
+
+    <ul>
+        <% folders.forEach(folder => { %>
+            <li>
+                <strong><%= folder.name %></strong>
+                <form action="/folders/<%= folder.id %>/delete" method="POST" style="display: inline;">
+                    <button type="submit">Delete</button>
+                </form>
+            </li>
+        <% }) %>
+    </ul>
+</body>
+</html>

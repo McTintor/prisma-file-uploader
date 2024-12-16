@@ -4,40 +4,47 @@ const prisma = require('../db/prisma');
 
 const passport = require('passport');
 
-// Define the Local Strategy
-passport.use(
-    new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
+passport.use(new LocalStrategy(
+    async (username, password, done) => {
         try {
-            // Find the user in the database
-            const user = await prisma.user.findUnique({ where: { email } });
+            const user = await prisma.user.findUnique({
+                where: { email: username }
+            });
 
             if (!user) {
-                return done(null, false, { message: 'User not found' });
+                return done(null, false, { message: 'Incorrect username or password' });
             }
 
-            // Compare the provided password with the hashed password
-            const isMatch = await bcrypt.compare(password, user.password);
-
-            if (!isMatch) {
-                return done(null, false, { message: 'Invalid credentials' });
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
+                return done(null, false, { message: 'Incorrect username or password' });
             }
 
             return done(null, user);
         } catch (err) {
             return done(err);
         }
-    })
-);
+    }
+));
 
-// Serialize and deserialize the user
-passport.serializeUser((user, done) => done(null, user.id));
+
+passport.serializeUser((user, done) => {
+    console.log('Serializing user:', user);
+    done(null, user.id); // Store user ID in session
+});
+
 passport.deserializeUser(async (id, done) => {
     try {
-        const user = await prisma.user.findUnique({ where: { id } });
-        done(null, user);
+        const user = await prisma.user.findUnique({
+            where: { id },
+        });
+        console.log('Deserializing user:', user);
+        done(null, user); // Attach user object to `req.user`
     } catch (err) {
         done(err, null);
     }
 });
+
+
 
 module.exports = passport;

@@ -7,19 +7,42 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  files     File[]
+}
+
+model File {
+  id        String   @id @default(cuid())
+  filename  String
+  filepath  String
+  size      Int
+  folderId  String
+  folder    Folder   @relation(fields: [folderId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
-    id       String   @id @default(cuid())
-    email    String   @unique
-    password String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id       String    @id @default(cuid())
+  email    String    @unique
+  password String
+  sessions Session[]
+  folders  Folder[]
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sid          String   @unique
-    data         String
-    expiresAt    DateTime
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
+  id        String   @id @default(cuid())
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
 }

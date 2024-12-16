@@ -6,7 +6,10 @@ const renderRegisterPage = (req, res) => {
 };
 
 const renderLoginPage = (req, res) => {
-    res.render('login');
+    const errors = req.flash('error');
+    res.render('login', {
+        errors
+    });
 }
 
 const register = async (req, res) => {
