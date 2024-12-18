@@ -31,9 +31,7 @@ const register = async (req, res) => {
 };
 
 const login = (req, res) => {
-    res.render('dashboard', {
-        user: req.user
-    });
+    res.redirect('/dashboard');
 };
 
 const logout = (req, res) => {
@@ -46,11 +44,27 @@ const logout = (req, res) => {
     });
 };
 
-const dashboard = (req, res) => {
+const dashboard = async (req, res) => {
     if (!req.isAuthenticated()) {
         return res.redirect('/login');
     }
-    res.render('dashboard', { user: req.user });
+
+    try {
+        const folders = await prisma.folder.findMany({
+            where: { userId: req.user.id },
+        });
+
+        res.render('dashboard', {
+            user: req.user,
+            folders,
+            messages: req.flash('success'),
+            errors: req.flash('error'),
+        });
+    } catch (error) {
+        console.error(error);
+        req.flash('error', 'Failed to load dashboard');
+        res.redirect('/login');
+    }
 };
 
 module.exports = {

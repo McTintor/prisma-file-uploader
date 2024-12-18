@@ -1,11 +1,18 @@
 const express = require('express');
-const { getFolders, createFolder, deleteFolder } = require('../controllers/folderController');
-
+const { createFolder, listFolders, updateFolder, deleteFolder } = require('../controllers/folderController');
 const router = express.Router();
 
-// Folder routes
-router.get('/', getFolders);
-router.post('/create', createFolder);
-router.post('/:id/delete', deleteFolder);
+// Middleware to protect routes
+const ensureAuthenticated = (req, res, next) => {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    res.redirect('/login');
+};
+
+router.post('/', ensureAuthenticated, createFolder);
+router.get('/', ensureAuthenticated, listFolders);
+router.put('/:id', ensureAuthenticated, updateFolder);
+router.delete('/:id', ensureAuthenticated, deleteFolder);
 
 module.exports = router;

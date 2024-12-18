@@ -10,25 +10,19 @@ module.exports = {
             sessionModelName: 'Session',
             userModelName: 'User',
             touch: async (sid, session, expires, prisma) => {
-                console.log("Session data:", session); // Debug session data
-                const userId = session?.passport?.user; // Access user ID
-
-                if (userId) {
-                    console.log("User ID:", userId); // Confirm user ID
-                    await prisma.session.upsert({
-                        where: { sid },
-                        update: { expiresAt: expires },
-                        create: {
-                            sid,
-                            data: JSON.stringify(session),
-                            expiresAt: expires,
-                            user: { connect: { id: userId } }, // Ensure user connection
-                        },
-                    });
-                } else {
-                    console.warn(`Session ${sid} missing user ID`);
-                }
-            },
+                console.log("Session data:", session);
+                await prisma.session.upsert({
+                    where: { sid },
+                    update: { expiresAt: expires },
+                    create: {
+                        sid,
+                        data: JSON.stringify(session),
+                        expiresAt: expires,
+                    },
+                });
+                console.log('Session upserted successfully.');
+            }
+            
         }),
         secret: 'your-secret-key',
         resave: false,
