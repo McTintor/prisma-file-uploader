@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder Files</title>
+</head>
+<body>
+    <h1>Files in Folder: <%= folder.name %></h1>
+
+    <!-- Flash Messages -->
+    <% if (messages.length) { %>
+        <div class="messages">
+            <% messages.forEach(msg => { %>
+                <p class="success"><%= msg %></p>
+            <% }) %>
+        </div>
+    <% } %>
+    <% if (errors.length) { %>
+        <div class="errors">
+            <% errors.forEach(err => { %>
+                <p class="error"><%= err %></p>
+            <% }) %>
+        </div>
+    <% } %>
+
+    <!-- File Upload Form -->
+    <h2>Upload File to Folder</h2>
+    <form action="/folders/<%= folder.id %>/files/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">Upload File</button>
+    </form>
+
+    <!-- Files List -->
+    <h3>Files:</h3>
+    <ul>
+        <% if (folder.files && folder.files.length > 0) { %>
+            <% folder.files.forEach(function(file) { %>
+                <li>
+                    <a href="/files/download/<%= file.id %>"><%= file.name %></a>
+                    <form action="/files/<%= file.id %>?_method=DELETE" method="POST" style="display:inline;">
+                        <button type="submit">Delete</button>
+                    </form>
+                </li>
+            <% }); %>
+        <% } else { %>
+            <li>No files in this folder yet.</li>
+        <% } %>
+    </ul>
+
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html>
