@@ -25,43 +25,63 @@
         </div>
     <% } %>
 
-    <!-- File Upload Form (Always visible on dashboard) -->
-    <h2>Upload File</h2>
-    <form action="/folders/<%= folder.id %>/files/upload" method="POST" enctype="multipart/form-data">
-        <input type="file" name="file" required>
-        <button type="submit">Upload File</button>
-    </form>       
-
     <!-- Folder Section -->
     <h2>Your Folders</h2>
     <ul>
-        <% folders.forEach((folder) => { %>
-            <div>
-                <h2>Upload File for <%= folder.name %></h2>
-                <form action="/folders/<%= folder.id %>/files/upload" method="POST" enctype="multipart/form-data">
-                    <input type="file" name="file" required>
-                    <button type="submit">Upload File</button>
+        <% folders.forEach(folder => { %>
+            <li>
+                <span class="folder-name" data-folder-id="<%= folder.id %>"><%= folder.name %></span>
+
+                <!-- Rename Form -->
+                <form action="/folders/<%= folder.id %>?_method=PUT" method="POST" class="rename-form" data-folder-id="<%= folder.id %>" style="display: none;">
+                    <input type="text" name="name" placeholder="New name" required>
                 </form>
-            </div>
-        <% }); %>
-        
+                <button type="button" class="rename-btn" data-folder-id="<%= folder.id %>">Rename</button>
+
+                <!-- Delete Form -->
+                <form action="/folders/<%= folder.id %>?_method=DELETE" method="POST" style="display: inline;">
+                    <button type="submit">Delete</button>
+                </form>
+
+                <!-- Show Files Button -->
+                <button type="button" class="show-files-btn" data-folder-id="<%= folder.id %>">Show Files</button>
+
+                <!-- Files List -->
+                <ul class="files-list" data-folder-id="<%= folder.id %>" style="display: none;">
+                    <!-- Dynamically populated file items -->
+                    <% if (folder.files && folder.files.length) { %>
+                        <% folder.files.forEach(file => { %>
+                            <li>
+                                <span><%= file.name %></span>
+                                <a href="<%= file.url %>" download>Download</a>
+                            </li>
+                        <% }) %>
+                    <% } else { %>
+                        <li>No files in this folder</li>
+                    <% } %>
+                </ul>
+
+                <!-- File Upload Form -->
+                <form action="/folders/<%= folder.id %>/files/upload" method="POST" enctype="multipart/form-data" class="upload-form" data-folder-id="<%= folder.id %>" style="display: none;">
+                    <input type="file" name="file" required>
+                    <button type="submit">Upload</button>
+                </form>
+            </li>
+        <% }) %>
     </ul>
 
+    <!-- Create Folder -->
     <form action="/folders" method="POST">
         <input type="text" name="name" placeholder="New folder name" required>
         <button type="submit">Create Folder</button>
     </form>
 
     <a href="/logout">Logout</a>
-</body>
-</html>
-
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const renameButtons = document.querySelectorAll('.rename-btn');
             const showFilesButtons = document.querySelectorAll('.show-files-btn');
-            const uploadForms = document.querySelectorAll('.upload-form');
 
             // Rename Button Logic
             renameButtons.forEach(button => {
@@ -71,12 +91,10 @@
                     const folderName = document.querySelector(`.folder-name[data-folder-id="${folderId}"]`);
 
                     if (button.textContent === 'Rename') {
-                        // Show the input and change button to "Save"
                         form.style.display = 'inline';
                         folderName.style.display = 'none';
                         button.textContent = 'Save';
                     } else {
-                        // Submit the form and reset the button
                         form.submit();
                     }
                 });
@@ -88,11 +106,17 @@
                     const folderId = button.dataset.folderId;
                     const fileList = document.querySelector(`.files-list[data-folder-id="${folderId}"]`);
                     const uploadForm = document.querySelector(`.upload-form[data-folder-id="${folderId}"]`);
-                    
-                    // Toggle the display of the files list
-                    fileList.style.display = fileList.style.display === 'none' ? 'block' : 'none';
-                    uploadForm.style.display = uploadForm.style.display === 'none' ? 'block' : 'none';
+
+                    if (fileList && uploadForm) {
+                        const isVisible = fileList.style.display === 'block';
+                        fileList.style.display = isVisible ? 'none' : 'block';
+                        uploadForm.style.display = isVisible ? 'none' : 'block';
+                    } else {
+                        console.error(`Files list or upload form not found for folder ID: ${folderId}`);
+                    }
                 });
             });
         });
     </script>
+</body>
+</html>

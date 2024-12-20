@@ -8,21 +8,21 @@
 <body>
     <h1>Files in Folder: <%= folder.name %></h1>
 
-    <!-- Flash Messages -->
-    <% if (messages.length) { %>
-        <div class="messages">
-            <% messages.forEach(msg => { %>
-                <p class="success"><%= msg %></p>
-            <% }) %>
-        </div>
-    <% } %>
-    <% if (errors.length) { %>
-        <div class="errors">
-            <% errors.forEach(err => { %>
-                <p class="error"><%= err %></p>
-            <% }) %>
-        </div>
-    <% } %>
+<% if (messages && messages.length) { %>
+    <div class="messages">
+        <% messages.forEach(msg => { %>
+            <p class="success"><%= msg %></p>
+        <% }) %>
+    </div>
+<% } %>
+<% if (errors && errors.length) { %>
+    <div class="errors">
+        <% errors.forEach(err => { %>
+            <p class="error"><%= err %></p>
+        <% }) %>
+    </div>
+<% } %>
+
 
     <!-- File Upload Form -->
     <h2>Upload File to Folder</h2>

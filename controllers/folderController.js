@@ -1,6 +1,8 @@
+// folderController.js
 const { PrismaClient } = require('@prisma/client');
 const prisma = require('../db/prisma');
 
+// Create a new folder
 const createFolder = async (req, res) => {
     const { name } = req.body;
     const userId = req.user.id;
@@ -11,7 +13,6 @@ const createFolder = async (req, res) => {
     }
 
     try {
-        // Check if a folder with the same name already exists for the user
         const existingFolder = await prisma.folder.findFirst({
             where: { name, userId },
         });
@@ -21,7 +22,6 @@ const createFolder = async (req, res) => {
             return res.redirect('/dashboard');
         }
 
-        // Create the folder if it doesn't exist
         await prisma.folder.create({
             data: { name, userId },
         });
@@ -35,30 +35,6 @@ const createFolder = async (req, res) => {
     res.redirect('/dashboard');
 };
 
-const getFolderDetails = async (req, res) => {
-    const { id } = req.params;
-    const userId = req.user.id;
-
-    try {
-        const folder = await prisma.folder.findUnique({
-            where: { id: parseInt(id) },
-            include: { files: true },
-        });
-
-        if (!folder || folder.userId !== userId) {
-            req.flash('error', 'Folder not found or unauthorized');
-            return res.redirect('/dashboard');
-        }
-
-        res.render('folderDetails', { folder });
-    } catch (error) {
-        console.error(error);
-        req.flash('error', 'Failed to retrieve folder details');
-        res.redirect('/dashboard');
-    }
-};
-
-
 // List all folders for the logged-in user
 const listFolders = async (req, res) => {
     const userId = req.user.id;
@@ -66,16 +42,14 @@ const listFolders = async (req, res) => {
     try {
         const folders = await prisma.folder.findMany({
             where: { userId },
-            include: {
-                files: true, // Include files in each folder
-            },
+            include: { files: true },
         });
 
-        res.render('dashboard', { 
-            user: req.user, 
-            folders,  // Ensure folders are passed to the template
-            messages: req.flash('success'), 
-            errors: req.flash('error') 
+        res.render('dashboard', {
+            user: req.user,
+            folders,
+            messages: req.flash('success'),
+            errors: req.flash('error'),
         });
     } catch (error) {
         console.error(error);
@@ -83,7 +57,7 @@ const listFolders = async (req, res) => {
     }
 };
 
-
+// Update folder name
 const updateFolder = async (req, res) => {
     const { id } = req.params;
     const { name } = req.body;
@@ -95,7 +69,6 @@ const updateFolder = async (req, res) => {
     }
 
     try {
-        // Check if folder name already exists
         const existingFolder = await prisma.folder.findFirst({
             where: { name, userId },
         });
@@ -105,7 +78,6 @@ const updateFolder = async (req, res) => {
             return res.redirect('/dashboard');
         }
 
-        // Update the folder name
         const updatedFolder = await prisma.folder.updateMany({
             where: { id, userId },
             data: { name },
@@ -125,19 +97,20 @@ const updateFolder = async (req, res) => {
     res.redirect('/dashboard');
 };
 
+// Delete a folder
 const deleteFolder = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
     try {
-        // Delete folder by matching both id and userId
-        const folder = await prisma.folder.delete({
-            where: {
-                id: id, // match the folder id
-                userId: userId // match the user id
-            }
-        });
+        const folder = await prisma.folder.findFirst({ where: { id, userId } });
 
+        if (!folder) {
+            req.flash('error', 'Folder not found or unauthorized');
+            return res.redirect('/dashboard');
+        }
+
+        await prisma.folder.delete({ where: { id } });
         req.flash('success', 'Folder deleted successfully');
     } catch (error) {
         console.error(error);
@@ -147,41 +120,42 @@ const deleteFolder = async (req, res) => {
     res.redirect('/dashboard');
 };
 
-// Show Files for a Specific Folder
-const showFolderFiles = async (req, res) => {
-    const { folderId } = req.params;
+// Get folder details including files
+const getFolderDetails = async (req, res) => {
+    const { id } = req.params;
+    const userId = req.user.id;
 
     try {
-        // Find the folder and its files
         const folder = await prisma.folder.findUnique({
-            where: { id: parseInt(folderId) },
-            include: { files: true }
+            where: { id: id },
+            include: { files: true },
         });
 
-        if (!folder) {
-            req.flash('error', 'Folder not found');
+        if (!folder || folder.userId !== userId) {
+            req.flash('error', 'Folder not found or unauthorized');
             return res.redirect('/dashboard');
         }
 
-        // Render the files page for this folder
-        res.render('folderDetails', { folder });
+        res.render('folderDetails', {
+            folder,
+            user: req.user,
+            messages: req.flash('success'),
+            errors: req.flash('error'),
+        });
     } catch (error) {
         console.error(error);
-        req.flash('error', 'Failed to load folder files');
+        req.flash('error', 'Failed to retrieve folder details');
         res.redirect('/dashboard');
     }
 };
 
-// Upload File to a Specific Folder
+// Upload file to a folder
 const uploadFileToFolder = async (req, res) => {
-    const { folderId } = req.params;  // Folder ID from the URL params
+    const { folderId } = req.params;
 
     try {
-        // Find the folder using the folderId from the params
         const folder = await prisma.folder.findUnique({
-            where: {
-                id: folderId,  // Ensure it's treated as a string (no need to parseInt)
-            }
+            where: { id: folderId },
         });
 
         if (!folder) {
@@ -189,23 +163,63 @@ const uploadFileToFolder = async (req, res) => {
             return res.redirect('/dashboard');
         }
 
-        // Proceed with file upload logic
-        const newFile = await prisma.file.create({
+        if (!req.file) {
+            req.flash('error', 'No file uploaded');
+            return res.redirect(`/folders/${folderId}/files`);
+        }
+
+        await prisma.file.create({
             data: {
-                filename: req.file.filename,
-                filepath: req.file.path,
-                size: req.file.size,
-                folderId: folder.id,  // Link the uploaded file to the folder
-            }
+                name: req.file.originalname,
+                path: req.file.path,
+                folderId: folder.id,
+            },
         });
 
         req.flash('success', 'File uploaded successfully');
-        res.redirect(`/folders/${folder.id}/files`);
-
+        res.redirect(`/folders/${folderId}/files`);
     } catch (error) {
         console.error(error);
         req.flash('error', 'Failed to upload file');
         res.redirect(`/folders/${folderId}/files`);
+    }
+};
+
+// Download a file
+const downloadFile = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const file = await prisma.file.findUnique({
+            where: { id: id },
+        });
+
+        if (!file) {
+            return res.status(404).send('File not found');
+        }
+
+        res.download(file.path, file.name);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Failed to download file');
+    }
+};
+
+// Delete a file
+const deleteFile = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        await prisma.file.delete({
+            where: { id: id },
+        });
+
+        req.flash('success', 'File deleted successfully');
+        res.redirect('/dashboard');
+    } catch (error) {
+        console.error(error);
+        req.flash('error', 'Failed to delete file');
+        res.redirect('/dashboard');
     }
 };
 
@@ -215,6 +229,7 @@ module.exports = {
     updateFolder,
     deleteFolder,
     getFolderDetails,
-    showFolderFiles,
-    uploadFileToFolder
+    uploadFileToFolder,
+    downloadFile,
+    deleteFile,
 };

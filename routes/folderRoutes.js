@@ -1,9 +1,8 @@
 const express = require('express');
-const { uploadFileToFolder, showFolderFiles, getFolderDetails, createFolder, listFolders, updateFolder, deleteFolder } = require('../controllers/folderController');
+const { uploadFileToFolder, deleteFile, downloadFile, getFolderDetails, createFolder, listFolders, updateFolder, deleteFolder } = require('../controllers/folderController');
 const upload = require('../middlewares/upload');
 const router = express.Router();
 
-// Middleware to protect routes
 const ensureAuthenticated = (req, res, next) => {
     if (req.isAuthenticated()) {
         return next();
@@ -16,9 +15,10 @@ router.get('/', ensureAuthenticated, listFolders);
 router.put('/:id', ensureAuthenticated, updateFolder);
 router.delete('/:id', ensureAuthenticated, deleteFolder);
 
-router.get('/:id/details', getFolderDetails);
+router.get('/:id/details', ensureAuthenticated, getFolderDetails);
 
-router.get('/:folderId/files', showFolderFiles);
-router.post('/:folderId/files/upload', upload.single('file'), uploadFileToFolder);
+router.post('/:folderId/files/upload', ensureAuthenticated, upload.single('file'), uploadFileToFolder);
+router.delete('/:folderId/files/:id', ensureAuthenticated, deleteFile);
+router.get('/:folderId/files/download/:id', ensureAuthenticated, downloadFile);
 
 module.exports = router;

@@ -2,7 +2,6 @@ const express = require('express');
 const path = require('path');
 const passport = require('./config/passport');
 const authRoutes = require('./routes/authRoutes');
-const fileRoutes = require('./routes/fileRoutes');
 const folderRoutes = require('./routes/folderRoutes');
 
 const app = express();
@@ -24,7 +23,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(authRoutes);
-app.use('/files', fileRoutes);
 app.use('/folders', folderRoutes);
 
 const PORT = process.env.PORT || 3006;
