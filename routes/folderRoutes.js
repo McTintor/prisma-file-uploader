@@ -15,10 +15,10 @@ router.get('/', ensureAuthenticated, listFolders);
 router.put('/:id', ensureAuthenticated, updateFolder);
 router.delete('/:id', ensureAuthenticated, deleteFolder);
 
-router.get('/:id/details', ensureAuthenticated, getFolderDetails);
+router.get('/:folderId/details', ensureAuthenticated, getFolderDetails);
 
-router.post('/:folderId/files/upload', ensureAuthenticated, upload.single('file'), uploadFileToFolder);
-router.delete('/:folderId/files/:id', ensureAuthenticated, deleteFile);
-router.get('/:folderId/files/download/:id', ensureAuthenticated, downloadFile);
+router.post('/:folderId/details/upload', ensureAuthenticated, upload.single('file'), uploadFileToFolder);
+router.delete('/:folderId/details/:fileId', ensureAuthenticated, deleteFile);
+router.get('/:folderId/details/download/:fileId', ensureAuthenticated, downloadFile);
 
 module.exports = router;

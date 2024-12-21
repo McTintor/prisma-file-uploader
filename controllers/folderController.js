@@ -1,6 +1,14 @@
 // folderController.js
-const { PrismaClient } = require('@prisma/client');
 const prisma = require('../db/prisma');
+const fs = require('fs');
+const path = require('path');
+
+const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
+
+// Ensure the uploads directory exists
+if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR);
+}
 
 // Create a new folder
 const createFolder = async (req, res) => {
@@ -13,6 +21,7 @@ const createFolder = async (req, res) => {
     }
 
     try {
+        // Check if a folder with the same name already exists for the user
         const existingFolder = await prisma.folder.findFirst({
             where: { name, userId },
         });
@@ -22,9 +31,14 @@ const createFolder = async (req, res) => {
             return res.redirect('/dashboard');
         }
 
-        await prisma.folder.create({
+        // Create folder in the database
+        const newFolder = await prisma.folder.create({
             data: { name, userId },
         });
+
+        // Create a physical directory in the uploads folder
+        const folderPath = path.join(UPLOADS_DIR, `${newFolder.id}`);
+        fs.mkdirSync(folderPath);
 
         req.flash('success', 'Folder created successfully');
     } catch (error) {
@@ -103,39 +117,74 @@ const deleteFolder = async (req, res) => {
     const userId = req.user.id;
 
     try {
-        const folder = await prisma.folder.findFirst({ where: { id, userId } });
+        const folderId = id;
 
+        const folder = await prisma.folder.findFirst({ where: { id: folderId, userId } });
         if (!folder) {
             req.flash('error', 'Folder not found or unauthorized');
             return res.redirect('/dashboard');
         }
 
-        await prisma.folder.delete({ where: { id } });
+        // Step 1: Delete files associated with the folder
+        const files = await prisma.file.findMany({ where: { folderId: folder.id } });
+
+        for (const file of files) {
+            console.log('Deleting file from disk:', file.path);
+            if (fs.existsSync(file.path)) {
+                fs.unlinkSync(file.path);
+            } else {
+                console.warn(`File not found on disk: ${file.path}`);
+            }
+        }
+
+        await prisma.file.deleteMany({ where: { folderId: folder.id } });
+
+        // Step 2: Delete the folder directory from disk
+        const folderPath = path.join(UPLOADS_DIR, `${folder.id}`);
+        if (fs.existsSync(folderPath)) {
+            fs.rmSync(folderPath, { recursive: true, force: true });
+        } else {
+            console.warn(`Folder directory not found on disk: ${folderPath}`);
+        }
+
+        // Step 3: Delete the folder from the database
+        await prisma.folder.delete({ where: { id: folder.id } });
+
         req.flash('success', 'Folder deleted successfully');
     } catch (error) {
-        console.error(error);
+        console.error('Error deleting folder:', error);
         req.flash('error', 'Failed to delete folder');
     }
 
     res.redirect('/dashboard');
 };
 
+
+
 // Get folder details including files
 const getFolderDetails = async (req, res) => {
-    const { id } = req.params;
+    const { folderId } = req.params; // Updated parameter name
     const userId = req.user.id;
 
     try {
         const folder = await prisma.folder.findUnique({
-            where: { id: id },
-            include: { files: true },
+            where: { id: folderId }, 
+            include: { files: true }, 
         });
 
-        if (!folder || folder.userId !== userId) {
-            req.flash('error', 'Folder not found or unauthorized');
+        if (!folder) {
+            req.flash('error', 'Folder not found');
             return res.redirect('/dashboard');
         }
 
+        if (folder.userId !== userId) {
+            req.flash('error', 'Unauthorized access');
+            return res.redirect('/dashboard');
+        }
+
+        console.log(folder.files);
+
+        // Render the folderDetails view
         res.render('folderDetails', {
             folder,
             user: req.user,
@@ -143,17 +192,19 @@ const getFolderDetails = async (req, res) => {
             errors: req.flash('error'),
         });
     } catch (error) {
-        console.error(error);
+        console.error('Error fetching folder details:', error);
         req.flash('error', 'Failed to retrieve folder details');
         res.redirect('/dashboard');
     }
 };
 
+
 // Upload file to a folder
 const uploadFileToFolder = async (req, res) => {
-    const { folderId } = req.params;
-
     try {
+        const folderId = req.params.folderId;
+
+        // Check if folder exists
         const folder = await prisma.folder.findUnique({
             where: { id: folderId },
         });
@@ -163,27 +214,41 @@ const uploadFileToFolder = async (req, res) => {
             return res.redirect('/dashboard');
         }
 
-        if (!req.file) {
+        // Handle file upload
+        const file = req.file; // File uploaded via Multer
+        if (!file) {
             req.flash('error', 'No file uploaded');
-            return res.redirect(`/folders/${folderId}/files`);
+            return res.redirect(`/folders/${folderId}/details`);
         }
 
+        // Generate a unique name for the file
+        const timestamp = Date.now();
+        const uniqueName = `${timestamp}-${file.originalname}`;
+        const folderPath = path.join(UPLOADS_DIR, `${folderId}`);
+        const filePath = path.join(folderPath, uniqueName);
+
+        // Move file to the folder's directory
+        fs.renameSync(file.path, filePath);
+
+        // Save file record in the database
         await prisma.file.create({
             data: {
-                name: req.file.originalname,
-                path: req.file.path,
+                filename: uniqueName, // Save the unique name
+                filepath: filePath,
+                size: file.size,
                 folderId: folder.id,
             },
         });
 
         req.flash('success', 'File uploaded successfully');
-        res.redirect(`/folders/${folderId}/files`);
-    } catch (error) {
-        console.error(error);
-        req.flash('error', 'Failed to upload file');
-        res.redirect(`/folders/${folderId}/files`);
+        return res.redirect(`/folders/${folderId}/details`);
+    } catch (err) {
+        console.error(err);
+        req.flash('error', 'Something went wrong');
+        res.redirect('/dashboard');
     }
 };
+
 
 // Download a file
 const downloadFile = async (req, res) => {

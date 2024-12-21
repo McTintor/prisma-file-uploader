@@ -102,20 +102,12 @@
 
             // Show Files Button Logic
             showFilesButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const folderId = button.dataset.folderId;
-                    const fileList = document.querySelector(`.files-list[data-folder-id="${folderId}"]`);
-                    const uploadForm = document.querySelector(`.upload-form[data-folder-id="${folderId}"]`);
-
-                    if (fileList && uploadForm) {
-                        const isVisible = fileList.style.display === 'block';
-                        fileList.style.display = isVisible ? 'none' : 'block';
-                        uploadForm.style.display = isVisible ? 'none' : 'block';
-                    } else {
-                        console.error(`Files list or upload form not found for folder ID: ${folderId}`);
-                    }
-                });
-            });
+    button.addEventListener('click', () => {
+        const folderId = button.dataset.folderId;
+        // Redirect to the folderDetails route
+        window.location.href = `/folders/${folderId}/details`;
+    });
+});
         });
     </script>
 </body>

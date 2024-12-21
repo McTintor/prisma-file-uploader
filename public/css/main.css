@@ -30,6 +30,51 @@ main {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+.folder-container {
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+}
+
+.files {
+    display: flex;
+    flex-direction: column;
+}
+
+.files > li{
+    gap: 20rem;
+    padding: 1rem 3rem;
+}
+
+.files > li:hover {
+    background-color: rgb(202, 215, 255);
+}
+
+a {
+    all: unset;
+    cursor: pointer;
+}
+
+a:hover {
+    font-style: italic;
+}
+
+.thumbnail {
+    width: 100px;
+    height: auto;
+    border: none;
+    margin: 10px;
+}
+
+.file-item {
+    display: inline-block;
+    text-align: center;
+    margin: 10px;
+}
+
 section {
     margin-bottom: 2rem;
 }
