@@ -1,6 +1,6 @@
 # Folder and File Management System
 
-A web application built using Node.js, Express.js, Prisma, and Supabase, designed to manage folders and files. Users can create folders, upload files, delete files, and organize their storage efficiently. The application also includes session-based authentication, file-sharing features, and cloud storage integration.
+A web application built using Node.js, Express.js, EJS and Prisma designed to manage folders and files. Users can create folders, upload files, download files, delete files, and organize their storage efficiently. The application also includes session-based authentication.
 
 
 ## Features
@@ -14,7 +14,6 @@ A web application built using Node.js, Express.js, Prisma, and Supabase, designe
  - Organized structure for better storage management.
 
 ### File Management
-
  - Upload files to specific folders using Multer for handling file uploads.
  - Delete files, both from the database and the file system.
  - View file details, including size, and download files.
@@ -59,16 +58,14 @@ A web application built using Node.js, Express.js, Prisma, and Supabase, designe
      
 ## Installation and Setup
 
- - Clone the Repository
-
  - Clone this repository to your local machine.
-   - Install Dependencies
 
- - Run npm install to install required packages.
-   - Set Up Environment Variables
+ - Install Dependencies
+   - Run npm install to install required packages.
 
- - Create a .env file in the root directory with the following:
-   - DATABASE_URL - Your PostgreSQL database connection string.
+ - Set Up Environment Variables
+   - Create a .env file in the root directory with the following:
+    - DATABASE_URL - Your PostgreSQL database connection string.
 
  - Run Migrations
    - Use npx prisma migrate dev to apply database migrations.
