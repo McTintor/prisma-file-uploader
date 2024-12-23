@@ -38,11 +38,17 @@
                         <span><%= file.filename %></span>
                         <span><%= (file.size / (1024 * 1024)).toFixed(2) %> MB</span>
                         <a href="/uploads/<%= folder.id %>/<%= file.filename %>" download>Download</a>
+                        <form action="/folders/<%= folder.id %>/details/delete/<%= file.id %>?_method=DELETE" method="POST">
+                            <button type="submit">Delete</button>
+                        </form>
                     <% } else { %>
                         <img src="/file.jpg" alt="<%= file.filename %>" class="thumbnail">
                         <a href="/uploads/<%= folder.id %>/<%= file.filename %>" target="_blank"><span><%= file.filename %></span></a>
                         <span><%= (file.size / (1024 * 1024)).toFixed(2) %> MB</span>
                         <a href="/uploads/<%= folder.id %>/<%= file.filename %>" download>Download</a>
+                        <form action="/folders/<%= folder.id %>/details/delete/<%= file.id %>?_method=DELETE" method="POST">
+                            <button type="submit">Delete</button>
+                        </form>
                     <% } %>
                 </li>
             <% }) %>

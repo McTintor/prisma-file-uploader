@@ -250,43 +250,44 @@ const uploadFileToFolder = async (req, res) => {
 };
 
 
-// Download a file
-const downloadFile = async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const file = await prisma.file.findUnique({
-            where: { id: id },
-        });
-
-        if (!file) {
-            return res.status(404).send('File not found');
-        }
-
-        res.download(file.path, file.name);
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Failed to download file');
-    }
-};
-
 // Delete a file
 const deleteFile = async (req, res) => {
     const { id } = req.params;
 
     try {
+        // Step 1: Retrieve file details from the database
+        const file = await prisma.file.findUnique({
+            where: { id: id },
+        });
+
+        if (!file) {
+            req.flash('error', 'File not found');
+            return res.redirect('/dashboard');
+        }
+
+        // Step 2: Delete the file from the filesystem
+        if (fs.existsSync(file.filepath)) {
+            fs.unlinkSync(file.filepath);
+        } else {
+            console.warn(`File not found on disk: ${file.filepath}`);
+        }
+
+        // Step 3: Delete the file record from the database
         await prisma.file.delete({
             where: { id: id },
         });
 
         req.flash('success', 'File deleted successfully');
-        res.redirect('/dashboard');
+
+        const folderId = req.params.folderId;
+        res.redirect(`/folders/${folderId}/details`);
     } catch (error) {
-        console.error(error);
+        console.error('Error deleting file:', error);
         req.flash('error', 'Failed to delete file');
         res.redirect('/dashboard');
     }
 };
+
 
 module.exports = {
     createFolder,
@@ -295,6 +296,5 @@ module.exports = {
     deleteFolder,
     getFolderDetails,
     uploadFileToFolder,
-    downloadFile,
     deleteFile,
 };

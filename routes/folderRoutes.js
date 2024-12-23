@@ -1,5 +1,5 @@
 const express = require('express');
-const { uploadFileToFolder, deleteFile, downloadFile, getFolderDetails, createFolder, listFolders, updateFolder, deleteFolder } = require('../controllers/folderController');
+const { uploadFileToFolder, deleteFile, getFolderDetails, createFolder, listFolders, updateFolder, deleteFolder } = require('../controllers/folderController');
 const upload = require('../middlewares/upload');
 const router = express.Router();
 
@@ -18,7 +18,6 @@ router.delete('/:id', ensureAuthenticated, deleteFolder);
 router.get('/:folderId/details', ensureAuthenticated, getFolderDetails);
 
 router.post('/:folderId/details/upload', ensureAuthenticated, upload.single('file'), uploadFileToFolder);
-router.delete('/:folderId/details/:fileId', ensureAuthenticated, deleteFile);
-router.get('/:folderId/details/download/:fileId', ensureAuthenticated, downloadFile);
+router.delete('/:folderId/details/delete/:id', ensureAuthenticated, deleteFile);
 
 module.exports = router;
