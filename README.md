@@ -36,7 +36,7 @@ A web application built using Node.js, Express.js, EJS and Prisma designed to ma
  - Passport.js
 
 ### File Uploads
- - Multer for handling file uploads.
+ - Multer
 
 ### Frontend
  - HTML5 and CSS3 for file structure and styling.
